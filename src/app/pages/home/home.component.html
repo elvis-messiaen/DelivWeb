@@ -1,1 +1,18 @@
-<p>home works!</p>
+<div class="container">
+  <div class="displayInfo">
+    <div class="numberJo">
+      <h5>Number of JOs</h5>
+      <p>{{ numberofJOs }}</p>
+    </div>
+    <div class="numberCountries">2</div>
+  </div>
+  <div class="cercle">
+    <canvas
+      baseChart
+      [data]="pieChartData"
+      [options]="pieChartOptions"
+      [type]="pieChartType"
+    >
+    </canvas>
+  </div>
+</div>
