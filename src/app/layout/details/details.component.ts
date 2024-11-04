@@ -6,7 +6,6 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
-import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
@@ -19,10 +18,13 @@ import { switchMap } from 'rxjs/operators';
 export class DetailsComponent implements OnInit {
   // Variable pour stocker les détails olympiques, initialisée à null
   olympicDetails: Olympics | null = null;
+  numberofEntry: number | null = null;
+  numberMedals: number | null = null;
+  TotalNumberAthletes: number | null = null;
 
   // Configuration des données du graphique de type 'line'
   chartData: ChartData<'line'> = {
-    labels: [], // Les labels pour l'axe des X (années)
+    labels: [], // Les labels pour l'axe des X (Dates)
     datasets: [
       {
         label: 'Nombre de médailles', // Titre de la courbe
@@ -66,22 +68,37 @@ export class DetailsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Utilisation de switchMap pour transformer l'Observable de la route en Observable de données
     this.route.paramMap
       .pipe(
         switchMap((params) => {
-          // Récupérer l'ID du pays à partir des paramètres de la route
           const idCountry = params.get('id');
-          console.log('ID reçu:', idCountry); // Debug : afficher l'ID dans la console
-          // Retourner l'Observable du service pour obtenir les détails olympiques
+          console.log('ID reçu:', idCountry);
           return idCountry ? this.olympicService.getOlympicById(idCountry) : [];
         })
       )
       .subscribe((data) => {
-        // Affecter les données reçues à la variable olympicDetails
         this.olympicDetails = data || null;
-        console.log('Détails olympiques reçus:', this.olympicDetails); // Debug : afficher les détails reçus
-        this.setupChartData(); // Mettre à jour les données du graphique
+        console.log('Détails olympiques reçus:', this.olympicDetails);
+        if (this.olympicDetails) {
+          // Calcul du nombre total d'entrées
+          this.numberofEntry = this.olympicDetails.participations.length;
+
+          // Calcul du nombre total de médailles
+          this.numberMedals = this.olympicDetails.participations.reduce(
+            (total, participation) => total + participation.medalsCount,
+            0
+          );
+
+          // Calcul du nombre total d'athlètes
+          this.TotalNumberAthletes = this.olympicDetails.participations.reduce(
+            (total, participation) => total + participation.athleteCount,
+            0
+          );
+
+          this.setupChartData(); // Mettre à jour les données du graphique
+        } else {
+          console.error('Pas de détails olympiques disponibles.');
+        }
       });
   }
 
@@ -93,7 +110,7 @@ export class DetailsComponent implements OnInit {
         this.olympicDetails.participations &&
         this.olympicDetails.participations.length > 0
       ) {
-        // Remplit les labels avec les années de chaque participation
+        // Remplit les labels avec les dates de chaque participation
         this.chartData.labels = this.olympicDetails.participations.map(
           (participation) => participation.year.toString()
         );

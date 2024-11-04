@@ -1,1 +1,36 @@
-/* You can add global styles to this file, and also import other style files */
+.displayInfo {
+  display: flex;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.numberJo,
+.numberCountries {
+  margin-top: 20px;
+  flex-direction: column;
+  margin-right: 20px;
+  width: 150px;
+  height: 100px;
+  border: 2px solid #008690;
+  border-radius: 5px;
+  font-size: 18px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.numberCountries p {
+  margin-top: 0;
+}
+
+.numberJo h5 {
+  margin-bottom: 5px;
+}
+
+.numberCountries h5 {
+  margin-bottom: 5px;
+}
+.numberJo p {
+  margin-top: 0;
+}

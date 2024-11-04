@@ -14,6 +14,8 @@ import { Router } from '@angular/router';
 })
 export class HomeComponent implements OnInit {
   numberofJOs: number | null = null;
+  numberCountries: number | null = null;
+
   public chart: Chart | undefined;
   public hoveredCountryId!: number | undefined;
 
@@ -105,6 +107,8 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     this.olympicService.getOlympics().subscribe((data: Olympics[]) => {
       this.olympics = data;
+
+      this.numberCountries = this.olympics.length;
 
       // Remplissage des données pour le graphique en fonction des participations
       this.olympics.forEach((country) => {
