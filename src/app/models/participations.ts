@@ -1,5 +1,5 @@
 export interface Participations {
-  id: string;
+  id: number;
   year: number;
   city: string;
   medalsCount: number;

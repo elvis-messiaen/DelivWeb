@@ -1,8 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Olympics } from '../../models/olympics';
-import { OLYMPIC_DATA } from '../../data/olympics-data';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData } from 'chart.js';
+import { OlympicService } from '../../services/olympic.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -13,8 +14,24 @@ import { Chart, ChartConfiguration, ChartData } from 'chart.js';
 })
 export class HomeComponent implements OnInit {
   numberofJOs: number | null = null;
+  public chart: Chart | undefined;
+  public hoveredCountryId!: number | undefined;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  // injection du service et de ChangeDetectorRef
+  constructor(
+    private olympicService: OlympicService,
+    private cdr: ChangeDetectorRef,
+    private router: Router
+  ) {}
+
+  onChartClick(): void {
+    if (this.hoveredCountryId) {
+      // Utilisez l'ID récupéré par le survol pour naviguer vers le composant de détail
+      this.router.navigate(['/details', this.hoveredCountryId]);
+    } else {
+      console.error('Aucun ID de pays disponible pour la navigation.');
+    }
+  }
 
   // Données pour le graphique en secteurs
   public pieChartData: ChartData<'pie'> = {
@@ -52,6 +69,13 @@ export class HomeComponent implements OnInit {
             const index = tooltipItem.dataIndex; // Index du secteur survolé
             const label = tooltipItem.label; // Nom du pays
             const data = this.pieChartData.datasets[0].data[index]; // Nombre de médailles
+            // Vérifiez que l'index est valide avant d'accéder à this.olympics
+            if (this.olympics && index >= 0 && index < this.olympics.length) {
+              this.hoveredCountryId = this.olympics[index].id; // Récupérer l'ID du pays
+            } else {
+              this.hoveredCountryId = undefined; // Définir à undefined si l'index est invalide
+            }
+
             this.numberofJOs = data;
             this.cdr.markForCheck();
             return `${label}: ${data} médailles`; // Formatage du texte du tooltip
@@ -73,28 +97,28 @@ export class HomeComponent implements OnInit {
   public pieChartType: 'pie' = 'pie'; // Type de graphique spécifié en tant que chaîne
 
   // Tableau pour stocker les données olympiques (initialisé vide)
-  olympics: Olympics[] = [];
+  public olympics: Olympics[] | undefined;
 
   // Longueur des lignes à dessiner
   private lineLength: number = 50;
 
   ngOnInit(): void {
-    // Initialisation du tableau olympics avec les données de OLYMPIC_DATA
-    this.olympics = OLYMPIC_DATA;
+    this.olympicService.getOlympics().subscribe((data: Olympics[]) => {
+      this.olympics = data;
 
-    // Remplissage des données pour le graphique en fonction des participations
-    this.olympics.forEach((country) => {
-      this.pieChartData.labels?.push(country.country); // Ajouter le nom du pays à la liste des labels
-      // Ajouter le nombre de médailles au dataset
-      const medalsCount = country.participations.reduce(
-        (total, participation) => total + participation.medalsCount,
-        0
-      );
-      this.pieChartData.datasets[0].data.push(medalsCount); // Ajout du nombre de médailles
+      // Remplissage des données pour le graphique en fonction des participations
+      this.olympics.forEach((country) => {
+        this.pieChartData.labels?.push(country.country);
+        const medalsCount = country.participations.reduce(
+          (total, participation) => total + participation.medalsCount,
+          0
+        );
+        this.pieChartData.datasets[0].data.push(medalsCount);
+      });
+
+      // Enregistrement du plugin après l'initialisation
+      this.registerCustomPlugin();
     });
-
-    // Enregistrement du plugin après l'initialisation
-    this.registerCustomPlugin();
   }
 
   private registerCustomPlugin() {
