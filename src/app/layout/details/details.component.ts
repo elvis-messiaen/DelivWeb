@@ -67,39 +67,49 @@ export class DetailsComponent implements OnInit {
     private olympicService: OlympicService
   ) {}
 
+  // Méthode d'initialisation du composant
   ngOnInit(): void {
+    // Récupération des paramètres de l'URL via ActivatedRoute
     this.route.paramMap
       .pipe(
+        // Utilisation de l'opérateur switchMap pour transformer les paramètres en Observable de données olympiques
         switchMap((params) => {
+          // Récupération de l'ID du pays à partir des paramètres de l'URL
           const idCountry = params.get('id');
-          console.log('ID reçu:', idCountry);
+          // Si un ID est trouvé, retourne un Observable des détails olympiques, sinon retourne un Observable vide
           return idCountry ? this.olympicService.getOlympicById(idCountry) : [];
         })
       )
-      .subscribe((data) => {
-        this.olympicDetails = data || null;
-        console.log('Détails olympiques reçus:', this.olympicDetails);
-        if (this.olympicDetails) {
-          // Calcul du nombre total d'entrées
-          this.numberofEntry = this.olympicDetails.participations.length;
+      .subscribe(
+        // Abonnement à l'Observable pour recevoir les données olympiques
+        (data) => {
+          // Stockage des données reçues dans la variable olympicDetails
+          this.olympicDetails = data || null;
+          if (this.olympicDetails) {
+            // Calcul du nombre total d'entrées
+            this.numberofEntry = this.olympicDetails.participations.length;
 
-          // Calcul du nombre total de médailles
-          this.numberMedals = this.olympicDetails.participations.reduce(
-            (total, participation) => total + participation.medalsCount,
-            0
-          );
+            // Calcul du nombre total de médailles
+            this.numberMedals = this.olympicDetails.participations.reduce(
+              (total, participation) => total + participation.medalsCount,
+              0
+            );
 
-          // Calcul du nombre total d'athlètes
-          this.TotalNumberAthletes = this.olympicDetails.participations.reduce(
-            (total, participation) => total + participation.athleteCount,
-            0
-          );
+            // Calcul du nombre total d'athlètes
+            this.TotalNumberAthletes =
+              this.olympicDetails.participations.reduce(
+                (total, participation) => total + participation.athleteCount,
+                0
+              );
 
-          this.setupChartData(); // Mettre à jour les données du graphique
-        } else {
-          console.error('Pas de détails olympiques disponibles.');
+            // Mettre à jour les données du graphique
+            this.setupChartData();
+          } else {
+            // Gestion de l'erreur si aucun détail olympique n'est disponible
+            console.error('Pas de détails olympiques disponibles.');
+          }
         }
-      });
+      );
   }
 
   setupChartData(): void {

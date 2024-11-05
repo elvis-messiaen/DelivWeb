@@ -4,7 +4,6 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData } from 'chart.js';
 import { OlympicService } from '../../services/olympic.service';
 import { Router } from '@angular/router';
-
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -13,27 +12,13 @@ import { Router } from '@angular/router';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent implements OnInit {
+  // Nombre total de JOs
   numberofJOs: number | null = null;
+  // Nombre total de pays
   numberCountries: number | null = null;
 
   public chart: Chart | undefined;
   public hoveredCountryId!: number | undefined;
-
-  // injection du service et de ChangeDetectorRef
-  constructor(
-    private olympicService: OlympicService,
-    private cdr: ChangeDetectorRef,
-    private router: Router
-  ) {}
-
-  onChartClick(): void {
-    if (this.hoveredCountryId) {
-      // Utilisez l'ID récupéré par le survol pour naviguer vers le composant de détail
-      this.router.navigate(['/details', this.hoveredCountryId]);
-    } else {
-      console.error('Aucun ID de pays disponible pour la navigation.');
-    }
-  }
 
   // Données pour le graphique en secteurs
   public pieChartData: ChartData<'pie'> = {
@@ -59,7 +44,7 @@ export class HomeComponent implements OnInit {
     responsive: true, // Rendre le graphique réactif
     plugins: {
       legend: {
-        display: false, // desactiver la légende
+        display: false, // Désactiver la légende
         position: 'top' as const, // Position de la légende
         labels: {
           padding: 20,
@@ -71,16 +56,19 @@ export class HomeComponent implements OnInit {
             const index = tooltipItem.dataIndex; // Index du secteur survolé
             const label = tooltipItem.label; // Nom du pays
             const data = this.pieChartData.datasets[0].data[index]; // Nombre de médailles
-            // Vérifiez que l'index est valide avant d'accéder à this.olympics
+            // Vérifie que l'index est valide avant d'accéder aux données des JO
             if (this.olympics && index >= 0 && index < this.olympics.length) {
-              this.hoveredCountryId = this.olympics[index].id; // Récupérer l'ID du pays
+              this.hoveredCountryId = this.olympics[index].id; // Récupère l'ID du pays
             } else {
               this.hoveredCountryId = undefined; // Définir à undefined si l'index est invalide
             }
 
+            // Met à jour le nombre de JOs
             this.numberofJOs = data;
+            // Force la détection des changements
             this.cdr.markForCheck();
-            return `${label}: ${data} médailles`; // Formatage du texte du tooltip
+            // Retourne le texte formaté pour le tooltip
+            return `${label}: ${data} médailles`;
           },
         },
       },
@@ -95,8 +83,8 @@ export class HomeComponent implements OnInit {
     aspectRatio: 1.5,
   };
 
-  // Type du graphique
-  public pieChartType: 'pie' = 'pie'; // Type de graphique spécifié en tant que chaîne
+  // Type du graphique spécifié en tant que chaîne
+  public pieChartType: 'pie' = 'pie';
 
   // Tableau pour stocker les données olympiques (initialisé vide)
   public olympics: Olympics[] | undefined;
@@ -104,43 +92,89 @@ export class HomeComponent implements OnInit {
   // Longueur des lignes à dessiner
   private lineLength: number = 50;
 
+  // Injection du service, ChangeDetectorRef et du routeur
+  constructor(
+    private olympicService: OlympicService,
+    private cdr: ChangeDetectorRef,
+    private router: Router
+  ) {}
+
+  // Méthode d'initialisation du composant
   ngOnInit(): void {
-    this.olympicService.getOlympics().subscribe((data: Olympics[]) => {
-      this.olympics = data;
+    // Appel du service pour récupérer les données des JO
+    this.olympicService.getOlympics().subscribe(
+      (data: Olympics[]) => {
+        // Stocke les données reçues dans la variable olympics
+        this.olympics = data;
 
-      this.numberCountries = this.olympics.length;
+        // Met à jour le nombre de pays
+        this.numberCountries = this.olympics.length;
 
-      // Remplissage des données pour le graphique en fonction des participations
-      this.olympics.forEach((country) => {
-        this.pieChartData.labels?.push(country.country);
-        const medalsCount = country.participations.reduce(
-          (total, participation) => total + participation.medalsCount,
-          0
-        );
-        this.pieChartData.datasets[0].data.push(medalsCount);
-      });
+        // Initialise les labels et les données du graphique
+        this.pieChartData.labels = [];
+        this.pieChartData.datasets[0].data = [];
 
-      // Enregistrement du plugin après l'initialisation
-      this.registerCustomPlugin();
-    });
+        // Remplit les labels et les données avec les pays et le nombre de médailles
+        this.olympics.forEach((country) => {
+          this.pieChartData.labels?.push(country.country);
+          const medalsCount = country.participations.reduce(
+            (total, participation) => total + participation.medalsCount,
+            0
+          );
+          this.pieChartData.datasets[0].data.push(medalsCount);
+        });
+
+        // Enregistre le plugin personnalisé pour le graphique
+        this.registerCustomPlugin();
+        // Déclenche la détection des changements
+        this.cdr.detectChanges();
+
+        // Met à jour l'instance du graphique après un léger délai
+        setTimeout(() => {
+          const chartElement = document.querySelector('canvas');
+          if (chartElement) {
+            const chartInstance = Chart.getChart(chartElement); // Récupère l'instance du graphique
+            if (chartInstance) {
+              chartInstance.update(); // Mise à jour du graphique
+            }
+          }
+        }, 0);
+      },
+      // Gestion des erreurs lors de la récupération des données
+      (error) => {
+        console.error('Erreur lors de la récupération des données :', error);
+      }
+    );
   }
 
+  // Méthode pour gérer le clic sur le graphique
+  onChartClick(): void {
+    // Vérifie si un ID de pays est disponible pour la navigation
+    if (this.hoveredCountryId) {
+      this.router.navigate(['/details', this.hoveredCountryId]);
+    } else {
+      console.error('Aucun ID de pays disponible pour la navigation.');
+    }
+  }
+
+  // Enregistre un plugin personnalisé pour dessiner des lignes sur le graphique
   private registerCustomPlugin() {
-    // Enregistrement d'un plugin personnalisé
     const customPlugin = {
       id: 'customLines',
       afterDraw: (chart: {
-        ctx: CanvasRenderingContext2D; // Type du contexte
+        ctx: CanvasRenderingContext2D;
         chartArea: any;
-        data: { datasets: any; labels: string[] }; // Définir les labels comme tableau de chaînes
+        data: { datasets: any; labels: string[] };
         getDatasetMeta: (arg0: any) => any;
       }) => {
-        const ctx = chart.ctx; // Contexte du graphique
-        const datasets = chart.data.datasets; // Récupération des datasets
+        const ctx = chart.ctx;
+        const datasets = chart.data.datasets;
 
+        // Parcourt chaque ensemble de données
         datasets.forEach(
           (dataset: { data: number[] }, datasetIndex: number) => {
-            const meta = chart.getDatasetMeta(datasetIndex); // Récupération des métadonnées du dataset
+            const meta = chart.getDatasetMeta(datasetIndex);
+            // Parcourt chaque élément du graphique
             meta.data.forEach(
               (
                 element: {
@@ -160,15 +194,15 @@ export class HomeComponent implements OnInit {
                 const model = element.getProps(
                   ['x', 'y', 'startAngle', 'endAngle', 'outerRadius'],
                   true
-                ); // Obtenir les coordonnées du secteur
+                );
 
-                // Récupération des informations nécessaires
-                const label = chart.data.labels[index]; // Nom du pays
-                const data = dataset.data[index]; // Nombre de médailles
-                const labelX = model.x; // Position X du secteur
-                const labelY = model.y; // Position Y du secteur
+                // Récupère les coordonnées et les données
+                const label = chart.data.labels[index];
+                const data = dataset.data[index];
+                const labelX = model.x;
+                const labelY = model.y;
 
-                // Couleurs du pays
+                // Définit les couleurs pour chaque secteur
                 const colors = [
                   'rgba(137, 73, 81, 1)',
                   'rgba(106, 40, 65, 1)',
@@ -178,37 +212,30 @@ export class HomeComponent implements OnInit {
                   'rgba(134, 107, 145, 1)',
                 ];
 
-                // Dessiner la ligne horizontale de 50px depuis l'extérieur du cercle
-                ctx.save(); // Sauvegarder l'état actuel du contexte
-                ctx.strokeStyle = colors[index]; // Définir la couleur de la ligne
-                ctx.lineWidth = 2; // Épaisseur de la ligne
+                ctx.save();
+                ctx.strokeStyle = colors[index];
+                ctx.lineWidth = 2;
                 ctx.font = '16px Arial';
                 ctx.beginPath();
 
-                // Calculer l'angle du secteur pour positionner la ligne correctement
-                const angle = (model.startAngle + model.endAngle) / 2; // Angle moyen du secteur
+                // Calcule les coordonnées de l'extrémité des lignes
+                const angle = (model.startAngle + model.endAngle) / 2;
+                const xOuter = model.x + Math.cos(angle) * model.outerRadius;
+                const yOuter = model.y + Math.sin(angle) * model.outerRadius;
 
-                const xOuter = model.x + Math.cos(angle) * model.outerRadius; // Position X au bord du cercle
-                const yOuter = model.y + Math.sin(angle) * model.outerRadius; // Position Y au bord du cercle
+                // Dessine les lignes partant du cercle
+                ctx.moveTo(xOuter, yOuter);
+                ctx.lineTo(xOuter + this.lineLength, yOuter);
+                ctx.stroke();
 
-                // Dessiner la ligne horizontale
-                ctx.moveTo(xOuter, yOuter); // Début de la ligne à l'extérieur
-                ctx.lineTo(xOuter + this.lineLength, yOuter); // Fin de la ligne horizontale
-                ctx.stroke(); // Dessiner la ligne
-
-                // Positionner le texte à gauche ou à droite selon le secteur
+                // Positionne le texte en fonction de l'angle
                 const textX =
-                  xOuter + this.lineLength + (angle > Math.PI ? -5 : 5); // Position X de l'étiquette
-                const textY = yOuter; // Position Y de l'étiquette
+                  xOuter + this.lineLength + (angle > Math.PI ? -5 : 5);
+                const textY = yOuter;
 
-                // Afficher l'étiquette
-
-                ctx.fillText(
-                  `${label} `,
-                  textX, // Position de l'étiq${data} médaillesuette légèrement décalée
-                  textY // Position Y de l'étiquette
-                ); // Affichage du texte du label
-                ctx.restore(); // Restaurer l'état du contexte
+                // Affiche le label à côté de la ligne
+                ctx.fillText(`${label} `, textX, textY);
+                ctx.restore();
               }
             );
           }
@@ -216,7 +243,7 @@ export class HomeComponent implements OnInit {
       },
     };
 
-    // Enregistrement du plugin
+    // Enregistre le plugin personnalisé dans Chart.js
     Chart.register(customPlugin);
   }
 }
