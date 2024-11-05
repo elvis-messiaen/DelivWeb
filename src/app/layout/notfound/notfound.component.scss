@@ -1,0 +1,24 @@
+.container {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+}
+
+p {
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.accueil {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+
+  &:hover {
+    color: white;
+    background-color: #675f5f;
+  }
+}

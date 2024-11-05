@@ -1,5 +1,8 @@
 <div class="container">
   <button (click)="goBack()" class="goBack">Retour</button>
+  <div class="alignTitre">
+    <div class="titre">Name of the country</div>
+  </div>
   <div class="displayInfo">
     <div class="numberJo">
       <h5>Number of entries</h5>
@@ -15,7 +18,6 @@
     </div>
   </div>
   <div class="details-chart-container">
-    <h2>Détails des Médailles</h2>
     <canvas
       baseChart
       [data]="chartData"

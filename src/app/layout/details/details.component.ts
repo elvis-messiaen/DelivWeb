@@ -13,126 +13,104 @@ import { switchMap } from 'rxjs/operators';
   standalone: true,
   templateUrl: './details.component.html',
   styleUrls: ['./details.component.scss'],
-  imports: [CommonModule, RouterModule, BaseChartDirective], // Import des modules nécessaires
+  imports: [CommonModule, RouterModule, BaseChartDirective],
 })
 export class DetailsComponent implements OnInit {
-  // Variable pour stocker les détails olympiques, initialisée à null
   olympicDetails: Olympics | null = null;
   numberofEntry: number | null = null;
   numberMedals: number | null = null;
   TotalNumberAthletes: number | null = null;
 
-  // Configuration des données du graphique de type 'line'
   chartData: ChartData<'line'> = {
-    labels: [], // Les labels pour l'axe des X (Dates)
+    labels: [],
     datasets: [
       {
-        label: 'Nombre de médailles', // Titre de la courbe
-        data: [], // Données de la courbe (nombre de médailles)
-        fill: false, // Pas de remplissage sous la ligne
-        borderColor: 'blue', // Couleur de la ligne
-        tension: 0.1, // Tension de la courbe pour un effet lisse
+        label: 'Nombre de médailles',
+        data: [],
+        fill: false,
+        borderColor: 'blue',
+        tension: 0.1,
       },
     ],
   };
 
-  // Options de configuration pour le graphique
   chartOptions: ChartOptions<'line'> = {
-    responsive: true, // Rendre le graphique réactif
+    responsive: true,
     plugins: {
       legend: {
-        display: false, // Ne pas afficher la légende
+        display: false,
       },
     },
     scales: {
       y: {
-        beginAtZero: true, // Commencer l'axe Y à zéro
+        beginAtZero: true,
         ticks: {
-          stepSize: 5, // Intervalle des graduations de l'axe Y
+          stepSize: 5,
         },
       },
       x: {
         title: {
-          display: true, // Afficher le titre de l'axe X
-          text: 'Dates', // Texte du titre de l'axe X
+          display: true,
+          text: 'Dates',
+          font: {
+            size: 30,
+            family: 'Arial',
+          },
+          color: 'gray',
         },
+        ticks: {},
       },
     },
   };
 
   constructor(
-    // Injection de la route active pour accéder aux paramètres de l'URL
     private route: ActivatedRoute,
-    // Injection du service OlympicService pour accéder aux données
     private olympicService: OlympicService
   ) {}
 
-  // Méthode d'initialisation du composant
   ngOnInit(): void {
-    // Récupération des paramètres de l'URL via ActivatedRoute
     this.route.paramMap
       .pipe(
-        // Utilisation de l'opérateur switchMap pour transformer les paramètres en Observable de données olympiques
         switchMap((params) => {
-          // Récupération de l'ID du pays à partir des paramètres de l'URL
           const idCountry = params.get('id');
-          // Si un ID est trouvé, retourne un Observable des détails olympiques, sinon retourne un Observable vide
           return idCountry ? this.olympicService.getOlympicById(idCountry) : [];
         })
       )
-      .subscribe(
-        // Abonnement à l'Observable pour recevoir les données olympiques
-        (data) => {
-          // Stockage des données reçues dans la variable olympicDetails
-          this.olympicDetails = data || null;
-          if (this.olympicDetails) {
-            // Calcul du nombre total d'entrées
-            this.numberofEntry = this.olympicDetails.participations.length;
-
-            // Calcul du nombre total de médailles
-            this.numberMedals = this.olympicDetails.participations.reduce(
-              (total, participation) => total + participation.medalsCount,
-              0
-            );
-
-            // Calcul du nombre total d'athlètes
-            this.TotalNumberAthletes =
-              this.olympicDetails.participations.reduce(
-                (total, participation) => total + participation.athleteCount,
-                0
-              );
-
-            // Mettre à jour les données du graphique
-            this.setupChartData();
-          } else {
-            // Gestion de l'erreur si aucun détail olympique n'est disponible
-            console.error('Pas de détails olympiques disponibles.');
-          }
+      .subscribe((data) => {
+        this.olympicDetails = data || null;
+        if (this.olympicDetails) {
+          this.numberofEntry = this.olympicDetails.participations.length;
+          this.numberMedals = this.olympicDetails.participations.reduce(
+            (total, participation) => total + participation.medalsCount,
+            0
+          );
+          this.TotalNumberAthletes = this.olympicDetails.participations.reduce(
+            (total, participation) => total + participation.athleteCount,
+            0
+          );
+          this.setupChartData();
+        } else {
+          console.error('Pas de détails olympiques disponibles.');
         }
-      );
+      });
   }
 
   setupChartData(): void {
-    // Vérifie si les détails olympiques sont disponibles
     if (this.olympicDetails) {
-      // Assurez-vous que les participations existent et contiennent des données
       if (
         this.olympicDetails.participations &&
         this.olympicDetails.participations.length > 0
       ) {
-        // Remplit les labels avec les dates de chaque participation
         this.chartData.labels = this.olympicDetails.participations.map(
           (participation) => participation.year.toString()
         );
 
-        // Remplit les données avec le nombre de médailles de chaque participation
         this.chartData.datasets[0].data =
           this.olympicDetails.participations.map(
             (participation) => participation.medalsCount
           );
 
-        // Met à jour le graphique en créant une nouvelle référence pour déclencher une mise à jour
-        this.chartData = { ...this.chartData }; // Déclenche une mise à jour
+        this.chartData = { ...this.chartData };
       } else {
         console.error(
           'Aucune participation disponible pour les détails olympiques.'
@@ -143,8 +121,7 @@ export class DetailsComponent implements OnInit {
     }
   }
 
-  // Méthode pour revenir à la page précédente
   goBack(): void {
-    window.history.back(); // Utiliser l'historique du navigateur pour revenir
+    window.history.back();
   }
 }

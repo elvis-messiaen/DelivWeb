@@ -36,7 +36,7 @@ SI vous avez tous fait comme expliqué précedement vous devez voir le nom du pr
 Cela indique que vosu êtes dans le projet.
 Ecrivez : npm i ou npm install
 Si cela ne marche pas c'est que vous n'avez pas de node package manager
-je vous invite a le faire en fonction de votre systeme d'explotation
+je vous invite a le faire en fonction de votre systeme d'exploitation
 Rendez vous sur ce site : https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
 Je ne ferais pas l'explication de cela. ce n'est pas le sujet. La documentation explique cela très clairement
 
