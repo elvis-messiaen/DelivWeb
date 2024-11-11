@@ -81,6 +81,7 @@ export class DetailsComponent implements OnInit {
         this.olympicDetails = data || null;
         if (this.olympicDetails) {
           this.NameContry = this.olympicDetails.country;
+
           this.numberofEntry = this.olympicDetails.participations.length;
           this.numberMedals = this.olympicDetails.participations.reduce(
             (total, participation) => total + participation.medalsCount,
