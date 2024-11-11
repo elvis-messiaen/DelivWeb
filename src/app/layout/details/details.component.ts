@@ -16,10 +16,11 @@ import { switchMap } from 'rxjs/operators';
   imports: [CommonModule, RouterModule, BaseChartDirective],
 })
 export class DetailsComponent implements OnInit {
-  olympicDetails: Olympics | null = null;
-  numberofEntry: number | null = null;
-  numberMedals: number | null = null;
-  TotalNumberAthletes: number | null = null;
+  public olympicDetails: Olympics | null = null;
+  public numberofEntry: number | null = null;
+  public numberMedals: number | null = null;
+  public TotalNumberAthletes: number | null = null;
+  public NameContry: string | null = null;
 
   chartData: ChartData<'line'> = {
     labels: [],
@@ -79,6 +80,7 @@ export class DetailsComponent implements OnInit {
       .subscribe((data) => {
         this.olympicDetails = data || null;
         if (this.olympicDetails) {
+          this.NameContry = this.olympicDetails.country;
           this.numberofEntry = this.olympicDetails.participations.length;
           this.numberMedals = this.olympicDetails.participations.reduce(
             (total, participation) => total + participation.medalsCount,

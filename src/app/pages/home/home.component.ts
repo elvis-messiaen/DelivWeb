@@ -19,6 +19,7 @@ export class HomeComponent implements OnInit {
   public pieChartType: 'pie' = 'pie';
   public olympics: Olympics[] | undefined;
   private lineLength: number = 50;
+  public numberofEntry: number = 0;
 
   public pieChartData: ChartData<'pie'> = {
     labels: [],
@@ -58,8 +59,10 @@ export class HomeComponent implements OnInit {
 
             if (this.olympics && index >= 0 && index < this.olympics.length) {
               this.hoveredCountryId = this.olympics[index].id;
+              this.numberofEntry = this.olympics[index].participations.length;
             } else {
               this.hoveredCountryId = undefined;
+              this.numberofEntry = 0;
             }
 
             this.numberofJOs = data;
@@ -93,6 +96,7 @@ export class HomeComponent implements OnInit {
         this.numberCountries = this.olympics.length;
         this.pieChartData.labels = [];
         this.pieChartData.datasets[0].data = [];
+
         this.olympics.forEach((country) => {
           this.pieChartData.labels?.push(country.country);
           const medalsCount = country.participations.reduce(
