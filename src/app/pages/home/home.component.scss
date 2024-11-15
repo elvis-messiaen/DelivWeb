@@ -12,21 +12,14 @@
 
 /* Media query pour mobile */
 @media (max-width: 430px) {
-  .cercle {
-    flex-direction: column;
-    transform: scale(1.1);
+  .chartjs-tooltip {
+    cursor: pointer;
+    font-size: 14px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
   }
-  .displayInfo {
-    font-size: 12px;
+  .custom-label {
+    display: block;
     text-align: center;
   }
-  canvas {
-    width: 250px;
-    height: 250px;
-  }
-}
-
-canvas {
-  max-width: 100%;
-  height: auto;
 }

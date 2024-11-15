@@ -8,13 +8,13 @@
   max-width: 50%;
 
   @media (max-width: 768px) {
-    padding-left: 10%; // Réduire le padding sur les petits écrans
-    max-width: 90%; // Augmenter la largeur sur les petits écrans
+    padding-left: 10%;
+    max-width: 90%;
   }
 
   @media (max-width: 480px) {
-    padding-left: 5%; // Réduire encore le padding sur les très petits écrans
-    max-width: 100%; // Utiliser la largeur complète sur les très petits écrans
+    padding-left: 5%;
+    max-width: 100%;
   }
 }
 
@@ -22,11 +22,11 @@ canvas {
   max-width: 100%;
 
   @media (max-width: 768px) {
-    max-width: 80%; // Réduire la taille du canvas sur les petits écrans
+    max-width: 80%;
   }
 
   @media (max-width: 480px) {
-    max-width: 90%; // Augmenter légèrement la taille sur les très petits écrans
+    max-width: 90%;
   }
 }
 
@@ -43,11 +43,11 @@ canvas {
   }
 
   @media (max-width: 768px) {
-    font-size: 18px; // Réduire légèrement la taille de la police sur les petits écrans
+    font-size: 18px;
   }
 
   @media (max-width: 480px) {
-    font-size: 16px; // Réduire encore la taille de la police sur les très petits écrans
-    margin-left: 10px; // Réduire la marge à gauche sur les très petits écrans
+    font-size: 16px;
+    margin-left: 10px;
   }
 }
