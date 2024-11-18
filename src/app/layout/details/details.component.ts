@@ -1,12 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OlympicService } from '../../services/olympic.service';
 import { Olympics } from '../../models/olympics';
 import { ChartData, ChartOptions } from 'chart.js';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
-import { switchMap } from 'rxjs/operators';
+import { of, Subject } from 'rxjs';
+import { catchError, switchMap, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-details',
@@ -15,12 +16,14 @@ import { switchMap } from 'rxjs/operators';
   styleUrls: ['./details.component.scss'],
   imports: [CommonModule, RouterModule, BaseChartDirective],
 })
-export class DetailsComponent implements OnInit {
+export class DetailsComponent implements OnInit, OnDestroy {
   public olympicDetails: Olympics | null = null;
   public numberofEntry: number | null = null;
   public numberMedals: number | null = null;
   public TotalNumberAthletes: number | null = null;
   public NameContry: string | null = null;
+  public isLoading = true;
+  private destroy$ = new Subject<void>();
 
   chartData: ChartData<'line'> = {
     labels: [],
@@ -66,22 +69,40 @@ export class DetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private olympicService: OlympicService
+    private olympicService: OlympicService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.loadOlympicDetails();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+  loadOlympicDetails(): void {
     this.route.paramMap
       .pipe(
         switchMap((params) => {
           const idCountry = params.get('id');
-          return idCountry ? this.olympicService.getOlympicById(idCountry) : [];
-        })
+          if (!idCountry) {
+            this.router.navigate(['/notfound']);
+            return of(null);
+          }
+          return this.olympicService.getOlympicById(idCountry).pipe(
+            catchError(() => {
+              this.router.navigate(['/notfound']);
+              return of(null);
+            })
+          );
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe((data) => {
-        this.olympicDetails = data || null;
-        if (this.olympicDetails) {
+        if (data) {
+          this.olympicDetails = data;
           this.NameContry = this.olympicDetails.country;
-
           this.numberofEntry = this.olympicDetails.participations.length;
           this.numberMedals = this.olympicDetails.participations.reduce(
             (total, participation) => total + participation.medalsCount,
@@ -92,8 +113,9 @@ export class DetailsComponent implements OnInit {
             0
           );
           this.setupChartData();
+          this.isLoading = false;
         } else {
-          console.error('Pas de détails olympiques disponibles.');
+          this.router.navigate(['/notfound']);
         }
       });
   }

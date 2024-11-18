@@ -12,6 +12,12 @@
       <p>{{ numberCountries }}</p>
     </div>
   </div>
+  @if (isLoading) {
+  <div class="spinner"></div>
+  <div class="alerte">Les données ne sont pas chargées</div>
+  } @if (!isLoading) {
+  <div class="cercle"></div>
+  }
   <div class="cercle">
     <canvas
       baseChart

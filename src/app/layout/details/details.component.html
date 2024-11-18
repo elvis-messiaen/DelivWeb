@@ -17,6 +17,10 @@
       <p>{{ TotalNumberAthletes }}</p>
     </div>
   </div>
+  @if (isLoading) {
+  <div class="spinner"></div>
+  <div class="alerte">Les données ne sont pas chargées</div>
+  } @if (!isLoading) {
   <div class="details-chart-container">
     <canvas
       baseChart
@@ -25,4 +29,5 @@
       [type]="'line'"
     ></canvas>
   </div>
+  }
 </div>

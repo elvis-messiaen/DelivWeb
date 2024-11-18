@@ -1,9 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Olympics } from '../../models/olympics';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData } from 'chart.js';
 import { OlympicService } from '../../services/olympic.service';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -11,7 +14,8 @@ import { Router } from '@angular/router';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
+  public isLoading = false;
   public numberofJOs: number | null = null;
   public numberCountries: number | null = null;
   public chart: Chart | undefined;
@@ -20,6 +24,7 @@ export class HomeComponent implements OnInit {
   public olympics: Olympics[] | undefined;
   private lineLength: number = 50;
   public numberofEntry: number = 0;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private olympicService: OlympicService,
@@ -28,39 +33,54 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.olympicService.getOlympics().subscribe(
-      (data: Olympics[]) => {
-        this.olympics = data;
-        this.numberCountries = this.olympics.length;
-        this.pieChartData.labels = [];
-        this.pieChartData.datasets[0].data = [];
+    this.loadOlympics();
+  }
 
-        this.olympics.forEach((country) => {
-          this.pieChartData.labels?.push(country.country);
-          const medalsCount = country.participations.reduce(
-            (total, participation) => total + participation.medalsCount,
-            0
-          );
-          this.pieChartData.datasets[0].data.push(medalsCount);
-        });
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-        this.registerCustomPlugin();
-        this.cdr.detectChanges();
+  loadOlympics(): void {
+    this.isLoading = true;
+    this.olympicService
+      .getOlympics()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(
+        (data: Olympics[]) => {
+          this.olympics = data;
+          this.numberCountries = this.olympics.length;
+          this.pieChartData.labels = [];
+          this.pieChartData.datasets[0].data = [];
 
-        setTimeout(() => {
-          const chartElement = document.querySelector('canvas');
-          if (chartElement) {
-            const chartInstance = Chart.getChart(chartElement);
-            if (chartInstance) {
-              chartInstance.update();
+          this.olympics.forEach((country) => {
+            this.pieChartData.labels?.push(country.country);
+            const medalsCount = country.participations.reduce(
+              (total, participation) => total + participation.medalsCount,
+              0
+            );
+            this.pieChartData.datasets[0].data.push(medalsCount);
+          });
+
+          this.registerCustomPlugin();
+          this.cdr.detectChanges();
+          this.isLoading = false;
+
+          setTimeout(() => {
+            const chartElement = document.querySelector('canvas');
+            if (chartElement) {
+              const chartInstance = Chart.getChart(chartElement);
+              if (chartInstance) {
+                chartInstance.update();
+              }
             }
-          }
-        }, 0);
-      },
-      (error) => {
-        console.error('Erreur lors de la récupération des données :', error);
-      }
-    );
+          }, 0);
+        },
+        (error) => {
+          console.error('Erreur lors de la récupération des données :', error);
+          this.isLoading = false;
+        }
+      );
   }
 
   public pieChartData: ChartData<'pie'> = {
@@ -80,7 +100,6 @@ export class HomeComponent implements OnInit {
       },
     ],
   };
-
   onChartHover(event: { event: MouseEvent; active: {}[] }): void {
     console.log('Chart Hover Event:', event);
   }
@@ -137,7 +156,7 @@ export class HomeComponent implements OnInit {
         bottom: 20,
       },
     },
-    aspectRatio: 1, // Ajuster le ratio pour qu'il soit plus carré
+    aspectRatio: 1,
   };
 
   onChartClick(): void {
@@ -159,8 +178,6 @@ export class HomeComponent implements OnInit {
       }) => {
         const ctx = chart.ctx;
         const datasets = chart.data.datasets;
-
-        // Vérifie si nous sommes en mode mobile
         const isMobile = window.innerWidth <= 430;
 
         datasets.forEach(
@@ -226,15 +243,14 @@ export class HomeComponent implements OnInit {
                   ctx.fillText(`${label}`, textX, textY);
                   ctx.restore();
                 } else {
-                  // Affiche les noms des pays directement à côté des sections en mode mobile
                   const angle = (model.startAngle + model.endAngle) / 2;
                   const xLabel =
-                    model.x + Math.cos(angle) * (model.outerRadius * 0.9); // Réduire de 10%
+                    model.x + Math.cos(angle) * (model.outerRadius * 0.9);
                   const yLabel =
-                    model.y + Math.sin(angle) * (model.outerRadius * 0.9); // Réduire de 10%
+                    model.y + Math.sin(angle) * (model.outerRadius * 0.9);
 
                   ctx.save();
-                  ctx.font = '14px Arial'; // Augmenter la taille de la police
+                  ctx.font = '14px Arial';
                   ctx.textAlign = 'center';
                   ctx.fillText(`${label}`, xLabel, yLabel);
                   ctx.restore();
